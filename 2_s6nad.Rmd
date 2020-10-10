@@ -222,8 +222,7 @@ ilukirj_sonad <- read_tsv("data/raudvere_uiboaed_mitmikud/token_1_grams.tsv",col
 
 
 ilukirj_sonad <- ilukirj_sonad %>%
-  mutate(sagedus_ilukirj=n_token/sum(n_token)) %>% 
-  mutate(row_number=row_number())
+  mutate(sagedus_ilukirj=n_token/sum(n_token))
 
 ```
 
@@ -231,6 +230,7 @@ ilukirj_sonad <- ilukirj_sonad %>%
 ```{r}
 
 ilukirj_sonad %>%
+  mutate(row_number=row_number()) %>% 
   filter(row_number<100) %>% 
   ggplot()+
   geom_point(aes(x=row_number,y=sagedus_ilukirj))
@@ -256,7 +256,7 @@ sonaloend %>%
 
 sonaloend %>%
   mutate(sagedus=n/sum(n)) %>%
-  mutate(row_number=row_number())
+  mutate(row_number=row_number()) %>% 
   filter(row_number<21) %>% 
   left_join(ilukirj_sonad, by="word") %>% 
   ggplot()+
@@ -300,6 +300,11 @@ sonaloend %>%
 Lisaks võime me siduda kaks tabelit hoopis järjekorranumbri alusel, nii et võrdsustatud pole mitte samad sõnad, vaid esimesed sada sõna lähtudes levikult.
 
 ```{r}
+
+
+ilukirj_sonad <- ilukirj_sonad %>%
+  mutate(row_number=row_number())
+
 
 sonaloend %>%
   mutate(sagedus=n/sum(n)) %>%
