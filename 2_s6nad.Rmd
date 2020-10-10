@@ -438,6 +438,17 @@ Proovi ise! Vali mõni lugu ja sõna selles ning vaata, mis asukohtadel ta esine
 ```
 
 
+Lisaülesanne: Otsi üles top 10 sõna, mis korduvad mingi teksti sees ja kuva nende asukohad.
+
+```{r}
+
+
+
+
+```
+
+
+
 Lõpuks võime teha ühe kokkuvõtva graafiku, mille jaoks me kasutame ainult juba meile teadaolevaid andmemuutmisviise. Püüame kujutada korduvate sõnade esinemist ühe laulu sees. Siin valime kõigepealt ühe loo, grupeerime sõnade kaupa ning kogume informatsiooni tema esinemise kohta. Mitmes omasugustest ta oli ja kui palju neid kokku oli. Eemaldame vähem levinumad sõnad ja kuvame x-teljel asukoha, y-teljel mitmes see sõna oli ja kasutame kõigeks selleks nüüd mitte punkti- vaid tekstikihti, lisades sildiks sõna enda.
 
 ```{r}
@@ -548,6 +559,26 @@ sonaloend %>%
 3. Mitu sõna esines kõigil 25-l aastal?
 
 ```{r}
+
+```
+
+
+
+Lisaülesande vastus:
+
+```{r}
+
+top10 <- asukohad %>% 
+  group_by(artist,song,year) %>% 
+  count(word,sort=T) %>% 
+  ungroup() %>% 
+  filter(row_number()<11)
+
+top10 %>% 
+  left_join(asukohad,by="word") %>% 
+  ggplot()+
+  geom_point(aes(x=asukoht,y= song.x,color=word))
+
 
 ```
 
