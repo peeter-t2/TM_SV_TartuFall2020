@@ -1,0 +1,548 @@
+---
+title: "R ja RStudio"
+author: "Peeter Tinits"
+output: html_document
+---
+
+
+# Tidytext ja tekstitöötlus
+
+Selles peatükis teeme esimest tutvust tidytext paketiga, mis on loodud tidyverse stiilis tekstitöötluseks R-is. See pakett ei suuda teha kõike ja ei pruugi olla alati ka kõige kiirem, aga teeb siiski ära lihtsama tekstitöötluse, mida meil vaja võib minna. Kui tekib huvi juurde õppida, siis selle paketi enda juhend on siin https://www.tidytextmining.com/.
+
+Juhul kui me alustasime R-i programmi uuesti on tarvis kõigepealt sisse lugeda paketid.
+
+```{r}
+
+library(tidyverse)
+
+```
+
+tidytext pakett on tidyverse põhipaketist eraldi ning seetõttu tuleb eraldi sisse lugeda. Kui seda pole varem installitud, siis utleb ta ka installida.
+
+```{r,eval=F}
+
+install.packages("tidytext")
+
+```
+
+```{r}
+
+library(tidytext)
+
+```
+
+Kui me käivitasime R-i uuesti, siis on meil vaja töötamiseks ka andmefail uuesti sisse lugeda.
+
+```{r}
+
+edetabel <- read_tsv("data/eesti_top40/eesti_skyplus_top40_1994-2018.tsv")
+
+
+```
+
+
+## unnest_tokens()
+
+Peamine käsk, mis aitab meil tekstidega R-is töötada on unnest_tokens(). unnest_tokens() võtab sisendiks ühe tekstitunnuse ning jaotab ta mingil alusel elementideks (tokeniseerib e. segmenteerib seda). Näiteks siis saab teha tekstidest sõnaloendi. Kui see on tehtud asetab ta iga elemendi omale reale, järgides tidy data põhimõtteid, et meil peaks olema üks vaatlusobjekt rea kohta. Lisaks eemaldab ta tekstist kirjavahemärgid, suurtähed ning teeb muud eeltöötlust, et eraldada elemendid tekstist. NB! Olenevalt uurija huvist tuleb teksti segmenteerida mõnikord teistmoodi - näiteks hoides alles kirjavahemärgid või suurtähed.
+
+unnest_tokens() - muudab andmestikku nii et iga tekstitunnuse element oleks omal real.
+
+
+Vaatame kõigepealt selle lihtsamat tulemust. Järgmine käsk võtab andmestiku tunnnuse lyrics, teeb selle elementideks (mis on vaikimisi sõnad) ning salvestab kõik 'word' nimelisse tulpa.
+
+```{r}
+
+edetabel %>%
+  unnest_tokens(word,lyrics)
+
+
+```
+
+Kui meil varem oli üks lugu tabelis iga rea kohta, siis nüüd on meil igal real üks sõna sellele kaasneva metainfoga. Ehk näha on midagi sellist.
+
+```{r}
+# A tibble: 157,632 x 9
+# year  rank votes artist    song      filename                   source language word          
+# <dbl> <dbl> <dbl> <chr>     <chr>     <chr>                       <dbl> <chr>    <chr>         
+#   1  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       välän         
+# 2  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       külmetas      
+# 3  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       ja            
+# 4  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       taivast       
+# 5  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       satas         
+# 6  1994     1    NA Ummamuudu Kõnõtraat lyrics-ummamuudu-konotraat      1 et       lummõ    
+```
+
+
+Kuna me kasutame seda andmekuju korduvalt ja tokeniseerimine võtab iga kord veidi aega, salvestame selle töötluse tulemuse ja viitame edaspidi juba töötluse lõpptulemusele.
+
+```{r}
+
+laulusonad <- edetabel %>%
+  unnest_tokens(word,lyrics)
+
+```
+
+Selle tabeliga saame teha samasuguseid operatsioone kui edetabeliga enne. Näiteks võime võtta kõik sõnad, mis on ühelt bändilt.
+
+```{r}
+
+laulusonad %>%
+  filter(artist=="Smilers")
+
+laulusonad %>%
+  filter(artist=="Terminaator")
+
+laulusonad %>%
+  filter(artist=="Ummamuudu")
+
+```
+
+
+Proovi ise! Vali välja üks artist ning võta tabelist välja ainult nende kasutatud sõnad
+
+```{r}
+
+#---------------------------------------------
+
+
+
+
+
+
+#---------------------------------------------
+
+```
+
+
+
+
+## Sõnaloendid
+
+Et hakata mõistma üldisemaid mustreid, milliseid sõnu on valitud, tuleks nad kõigepealt kokku lugeda.
+
+```{r}
+
+laulusonad %>%
+  count(word,sort=T)
+
+```
+
+Nagu näeme, on enimkasutatud sõnad ka lauludes enamvähem samad kui keeles üldiselt. On, ja, ei, ma, kui, sa jne.
+
+Me võime filtrite abil koostada ka sagedussõnastiku mõnele üksikule artistile ja vaadata neid ühekaupa.
+
+```{r}
+
+laulusonad %>%
+  filter(artist=="Põhja-Tallinn") %>%
+  count(word,sort=T)
+
+laulusonad %>%
+  filter(artist=="Ummamuudu") %>%
+  count(word,sort=T)
+
+
+laulusonad %>%
+  filter(artist=="Nublu") %>%
+  count(word,sort=T)
+
+
+```
+
+Proovi ise! Vali välja üks artist ning vaata nende enimkasutatud sõnu.
+
+```{r}
+
+#---------------------------------------------
+
+
+
+
+
+
+#---------------------------------------------
+
+```
+
+
+## Esinemiskorrad vs sagedused
+
+Nagu me alguses rääkisime, on üpris loomulik, et pikemas tekstis on levinud sõnu rohkem ka üldarvult. Selleks, et mitte võrrelda ühise aluseta, vaadatakse tihti sõnade sagedusi, st neid sõnu terve korpuse kontekstis - oli neid 0.1%, 0.01% või mõni muu hulk.
+
+Selle arvutamiseks saame teha uue tulba, kus me jagame selle sõna esinemiskordade arvu kõigi esinemiskordade arvude summaga, saades vastuseks numbri 0-i ja 1-e vahel.
+
+```{r}
+
+sonaloend <- laulusonad %>% 
+  count(word,sort=T) %>% 
+  mutate(sagedus=n/sum(n))
+
+```
+
+Siin võime vaadata ka lihtsamat trendi, mida mainisime sissejuhatuses. Kõige levinumad sõnad on väga levinud, edasi on levikuarvud juba omavahel võrdsemad. Anname sõnadele lihtsalt leviku alusel järjekorranumbri ja kuvame neist esimesed sada. See töötab ühe korpuse sees nii toornumbrite kui sagedusega.
+
+```{r}
+
+sonaloend %>%
+  mutate(row_number=row_number()) %>% 
+  filter(row_number<100) %>% 
+  ggplot()+
+  geom_point(aes(x=row_number,y=n))
+
+```
+
+```{r}
+
+sonaloend %>%
+  mutate(row_number=row_number()) %>% 
+  filter(row_number<100) %>% 
+  ggplot()+
+  geom_point(aes(x=row_number,y=sagedus))
+
+```
+
+
+
+## Võrdlus teise korpusega, join()
+
+Me võime nüüd mõelda, kui tüüpiline meie laulusõnade korpus on võrreldes keelega üldisemalt. Nagu loengutes sai räägitud, on selleks kasulik vaadata sõnade suhtelist osakaalu korpuses, mitte absoluutarvu, kuna tekstikogude suurused võivad olla väga erinevad. Niisiis saame jagada leitud sõnade arvu kõikide sõnade arvu hulgaga, saades kätte kui sage see sõna tervikkorpuses on.
+
+```{r}
+
+sonaloend %>%
+  mutate(sagedus=n/sum(n))
+
+```
+
+Meil on võimalik seda sagedust võrrelda eesti ilukirjandusest tehtud korpusega. Ühe sellise korpuse kohta on sõnasageduste statistika saadaval siin. http://datadoi.ut.ee/handle/33/41. Loeme sisse sõnade sageduse info.
+
+```{r}
+
+ilukirj_sonad <- read_tsv("data/raudvere_uiboaed_mitmikud/token_1_grams.tsv",col_names = c("word","n_token","n_docs"))
+
+
+ilukirj_sonad <- ilukirj_sonad %>%
+  mutate(sagedus_ilukirj=n_token/sum(n_token)) %>% 
+  mutate(row_number=row_number())
+
+```
+
+
+```{r}
+
+ilukirj_sonad %>%
+  filter(row_number<100) %>% 
+  ggplot()+
+  geom_point(aes(x=row_number,y=sagedus_ilukirj))
+
+```
+
+
+
+Me saame kasutada nende tabelite ühendamiseks käsku left_join(). left_join liidab esimesele tabelile teise, otsides võrdseid väärtusi määratud tulpades. Kui me kasutame argumenti by="word", otsib käsk võrdseid väärtusi sõnade seast ja nii seob kokku ühe sõna kohta käiva info kummaski korpuses. left_join() jätab alles kõik väärtused esimeses tabelis, aga võtab kaasa ainult vajalikud väärtused teises tabelis.
+
+```{r}
+
+sonaloend %>%
+  filter(row_number()<11) %>% 
+  mutate(sagedus=n/sum(n)) %>%
+  left_join(ilukirj_sonad, by="word")
+
+```
+
+
+
+```{r}
+
+sonaloend %>%
+  mutate(sagedus=n/sum(n)) %>%
+  mutate(row_number=row_number())
+  filter(row_number<21) %>% 
+  left_join(ilukirj_sonad, by="word") %>% 
+  ggplot()+
+  geom_point(aes(x=word,y=sagedus,color="laulud"))+
+  geom_point(aes(x=word,y=sagedus_ilukirj,color="ilukirj"))
+
+```
+
+Sõnadel tekstides on üldiselt omane jaotus, et kõige levinumad sõnad on teistest palju rohkem levinumad ja edasi, seda enam esinemissagedused ühtlustuvad.
+
+```{r}
+
+sonaloend %>%
+  mutate(sagedus=n/sum(n)) %>%
+  mutate(row_number=row_number()) %>% 
+  filter(row_number<121) %>% 
+  left_join(ilukirj_sonad, by="word") %>% 
+  ggplot()+
+  geom_point(aes(x=row_number,y=sagedus,color="laulud"))+
+  geom_point(aes(x=row_number,y=sagedus_ilukirj,color="ilukirj"))
+
+```
+
+
+Me võime vaadata ka keskmise leviku sõnade kohta sama.
+
+```{r}
+
+sonaloend %>%
+  mutate(sagedus=n/sum(n)) %>%
+  filter(row_number()>101&row_number()<121) %>% 
+  left_join(ilukirj_sonad, by="word") %>% 
+  ggplot()+
+  geom_point(aes(x=word,y=sagedus,color="laulud"))+
+  geom_point(aes(x=word,y=sagedus_ilukirj,color="ilukirj"))
+
+```
+
+
+
+Lisaks võime me siduda kaks tabelit hoopis järjekorranumbri alusel, nii et võrdsustatud pole mitte samad sõnad, vaid esimesed sada sõna lähtudes levikult.
+
+```{r}
+
+sonaloend %>%
+  mutate(sagedus=n/sum(n)) %>%
+  mutate(row_number=row_number()) %>% 
+  filter(row_number<101) %>% 
+  left_join(ilukirj_sonad, by="row_number") %>% 
+  ggplot()+
+  geom_point(aes(x=row_number,y=sagedus,color="laulud"))+
+  geom_point(aes(x=row_number,y=sagedus_ilukirj,color="ilukirj"))
+
+```
+
+
+
+Vali käsitsi välja mõni sõna ja vaata, kuidas selle sagedus erineb laulude ja ilukirjanduse vahel.
+
+```{r}
+
+#---------------------------------------------
+
+
+
+
+
+
+#---------------------------------------------
+
+```
+
+
+## Asukoht tekstis
+
+Kasutades etteantud vahendeid on võimalik ka esitada küsimusi sõnade asukoha kohta. Näiteks, et kui laul kasutas sõna satelliidid nii palju kordi, siis kas seda laulu lõpus või alguses või läbivalt igal pool. Selleks saame kasutada käske group_by(), mutate() ja row_number(). Nimelt, et kui me vaatasime eelmises peatükis edetabeleid row_number() kaudu, siis nüüd võime kasutada seda ka sõnadel nende loomulikus järjekorras. Numbrid ühest kuni loo pikkuseni viitavad sõna asukohale tekstis.
+
+Niisiis, saame iga laulu sees sõna asukoha grupeerides laulud eraldi ning lisades uue tulba row_number().
+
+```{r}
+
+laulusonad %>% 
+  group_by(artist,song,year) %>% 
+  mutate(nr=row_number())
+
+
+```
+
+Kuna lood on erineva pikkusega, siis on võrdluse huvides ehk kasulik vaadata loo pikkust osakaaluna tervikust. Selleks võime lisada ka loendi n() kaudu. mutate() võimaldab nii lisada mitu uut tunnust.
+
+```{r}
+
+laulusonad %>% 
+  group_by(artist,song,year) %>% 
+  mutate(nr=row_number(), n=n())
+
+```
+
+Ja kui meil on olemas nii rea number kui ridade arv võime välja arvutada sõna suhtelise asukoha. Lisame selleks tunnusele n ühe, et kõik tulemused oleks väiksem kui üks. 
+
+```{r}
+
+laulusonad %>% 
+  group_by(artist,song,year) %>% 
+  mutate(nr=row_number(), n=n()) %>% 
+  mutate(asukoht=nr/(n+1))
+
+```
+
+Et me kasutame seda korduvalt võime jälle selle salvestada.
+
+```{r}
+
+asukohad <- laulusonad %>% 
+  group_by(artist,song,year) %>% 
+  mutate(nr=row_number(), n=n()) %>% 
+  mutate(asukoht=nr/(n+1)) %>% 
+  ungroup()
+
+```
+
+Nüüd võime uurida mõne konkreetse sõna esinemist erinevates lauludes. y-teljele laul, x-teljele asukoht.
+
+```{r}
+
+asukohad %>% 
+  filter(word=="armastus") %>% 
+  ggplot()+
+  geom_point(aes(y=song,x=asukoht))
+  
+
+```
+
+Võime sama vaadata mõne teise sõna kohta.
+
+```{r}
+
+asukohad %>% 
+  filter(word=="la") %>% 
+  ggplot()+
+  geom_point(aes(y=song,x=asukoht))
+  
+
+```
+
+Ja samamoodi ka mitme sõna kohta korraga, kasutades või | märki. Saame märkida sõnad joonisel eri värvidega. 
+
+```{r}
+
+asukohad %>% 
+  filter(word=="la"|word=="na") %>% 
+  ggplot()+
+  geom_point(aes(y=song,x=asukoht,color=word))
+  
+
+```
+
+
+Proovi ise! Vali mõni lugu ja sõna selles ning vaata, mis asukohtadel ta esineb.
+
+```{r}
+
+#---------------------------------------------
+
+
+
+
+
+
+
+
+#---------------------------------------------
+
+```
+
+
+Lõpuks võime teha ühe kokkuvõtva graafiku, mille jaoks me kasutame ainult juba meile teadaolevaid andmemuutmisviise. Püüame kujutada korduvate sõnade esinemist ühe laulu sees. Siin valime kõigepealt ühe loo, grupeerime sõnade kaupa ning kogume informatsiooni tema esinemise kohta. Mitmes omasugustest ta oli ja kui palju neid kokku oli. Eemaldame vähem levinumad sõnad ja kuvame x-teljel asukoha, y-teljel mitmes see sõna oli ja kasutame kõigeks selleks nüüd mitte punkti- vaid tekstikihti, lisades sildiks sõna enda.
+
+```{r}
+
+asukohad %>% 
+  filter(song=="Mina ka ft. reket") %>% 
+  group_by(word) %>% 
+  mutate(n=n(),nr_per_word=row_number()) %>% 
+  ungroup() %>% 
+  filter(n>4) %>% 
+  ggplot()+
+  geom_text(aes(x=asukoht,y=nr_per_word,label=word))
+
+```
+
+Mõnel puhul peame olema ettevaatlik, et me ikka võtame ühe loo esinemise korraga. Kui sõnad on topelt või kolmekordselt, võib graafik tulla segasem.
+
+```{r}
+
+asukohad %>% 
+  filter(song=="Käime katuseid mööda"&year==2003) %>% 
+  group_by(word) %>% 
+  mutate(n=n(),nr_per_word=row_number()) %>% 
+  ungroup() %>% 
+  filter(n>1) %>% 
+  ggplot()+
+  geom_text(aes(x=asukoht,y=jitter(nr_per_word,5),label=word))
+
+```
+
+
+
+Proovi ise! Vali mõni lugu ja kujuta selles sagedalt esinevaid sõnu.
+
+```{r}
+
+#---------------------------------------------
+
+
+
+
+
+
+
+
+#---------------------------------------------
+
+```
+
+
+
+## Kui sama sõna esineb mitmel viisil.
+
+Seni oleme filtreerinud ainult täpse võrdsuse kaudu. See ei arvesta võimalusega, et meil on sõna käändes, pöördes või mõnel muul moel muudetud. Nt sõna armastus esineb kokku 98 korda.
+
+```{r}
+
+sonaloend %>% 
+  filter(word=="armastus")
+
+```
+
+Samas kui võimaldame teisi kujusid, leiame veel paarkümmend esinemiskorda.
+
+```{r}
+
+sonaloend %>% 
+  filter(str_detect(word,"armastus"))
+
+```
+
+Üks viis otsinguid paindlikumaks teha on regulaaravaldiste kaudu. Nendega tutvumiseks annan kodutööks sirvida üht regulaaravaldiste juhendit https://kristel.gitbooks.io/regulaaravaldised/content/ ja lahendada ära esimesed 10 ülesannet siin lehel: https://regexone.com/. Regulaaravaldiste testimiseks on üks kasulik leht siin: https://regex101.com/.
+
+
+
+
+## Sõnastik
+
+-  %>% - vii andmed järgmisesse protsessi
+- filter() vii andmestik läbi filtri/sõela
+- count() - loeb esinemiste arvu (võib panna mitu tulpa korraga)
+- group_by() - grupeeri andmestik mingi muutuja alusel (võib panna mitu tulpa korraga)
+- ungroup() - vii andmestik taas grupeerimata seisu
+- n() - grupi suurus
+- row_number() - rea number
+- mutate() - loo uus muutuja
+- unnest_tokens() - võtab tekstijupi ja jupitab selle mingil alusel ja paneb iga jupi eraldi reale.
+- left_join() - liidab vasakpoolse andmestiku külge need read, mis sobivad paremast.
+
+
+## Harjutusülesanded
+
+
+1. Vali välja üks artist ja trüki välja 10 levinumat sõna tema sõnavaras.
+
+```{r}
+
+```
+
+
+2. Milline oli levikult kolmeteistkümnes sõna kõigis eestikeelsetes tekstides?
+
+```{r}
+
+```
+
+
+3. Mitu sõna esines kõigil 25-l aastal?
+
+```{r}
+
+```
+
