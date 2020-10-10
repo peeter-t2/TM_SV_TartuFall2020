@@ -2,15 +2,15 @@
 
 Koodi saab käivitada nbvieweri kaudu RStudio või Jupyter keskkonnas. Selle keskkonna saab käivitada järgmistel linkidel.
 
-RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/TM_SV_TartuFall2020/main?urlpath=rstudio)
+RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/TM_SV_TartuFall2020/master?urlpath=rstudio)
 
-Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/TM_SV_TartuFall2020/main)
+Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/TM_SV_TartuFall2020/master)
 
 ## Oma arvutis
 
 Koodi võib ka alla laadida ja käivitada oma arvutis. Installi kõigepealt [R](https://cran.r-project.org/) ja siis [RStudio](https://rstudio.com/products/rstudio/download/).
 
-Kõik failid korraga saab alla laadida siit. [here](https://github.com/peeter-t2/TM_SV_TartuFall2020/archive/main.zip).
+Kõik failid korraga saab alla laadida siit. [here](https://github.com/peeter-t2/TM_SV_TartuFall2020/archive/master.zip).
 
 ## Litsents
 
