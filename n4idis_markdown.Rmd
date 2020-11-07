@@ -1,0 +1,91 @@
+---
+title: "Näidis markdown dokumendist"
+author: "Peeter Tinits"
+date: "11/7/2020"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+# Analüüs
+
+Näidisanalüüs näitab lihtsast tekstianalüüsist tehtud dokumenti. Dokument näitab eelkõige markdown formaati. Üldiselt kirjutatakse (ja ka kodutöös on oodatud), et tehtud analüüs kirjutatakse pikemalt lahti.
+
+## Sissejuhatus
+
+Me tahame teada, kuidas räägiti elektrist 20. sajandi algul eesti ajakirjanduses. Rahvusraamatukogu Eesti artiklites on hea ajakate olemas selle kohta Postimehes. Keskendume sellele. Proovime leida, milliseid sõnu, milles on viide elektrile toona kasutati ja kuidas nende esinemine ajas jaotus.
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidytext)
+```
+
+## Andmed
+
+Andmeteks on Rahvusraamatukogu Eesti artiklite tekstid, mis on ilmunud Postimehes aastavahemikus 1886-1940. Seal on otsitud kõiki tekste, mis sisaldavad sõnaosa "elekt".
+
+```{r}
+elekt <- read_tsv("data/elekter.txt.zip",col_names = F) %>% rename(id=X1, txt= X2)
+```
+
+Artiklinimi sisaldab ka informatsiooni ilmumise aja kohta. Kasutame regulaaravaldisi, et saada see kätte eraldi tulbana aasta kohta.
+
+```{r}
+elekt <- elekt %>% 
+    mutate(year=as.numeric(str_extract(id,"[0-9]{4}")))
+
+```
+
+## Töötlus
+
+Tekst on jaotatud sõnaüksusteks tidytext üksustajaga `unnest_tokens()`. Sellega jätame kõrvale ka eristuse suur ja väiketähtede vahel.
+
+```{r}
+elekt_sonad <- elekt %>% 
+  unnest_tokens(word,txt)
+```
+
+## Otsing
+
+Otsisin sõnu, mis sisaldavad tähejärjendit 'elekt', ja tegin neist sagedusloendi.
+
+```{r}
+elekt_tyybid <- elekt_sonad %>% 
+  filter(str_detect(word,"elekt")) %>% 
+  count(word,sort=T)
+
+```
+
+Vaatasin esimesed 150 nimetust sealt ja valisin sealt mõned otsingusõnad
+
+```{r}
+elekt_tyybid %>% 
+  filter(row_number()<151) 
+
+# Salvestame need sõnad ka faili.
+elekt_tyybid %>% 
+  filter(row_number()<151) %>% 
+  write_tsv("output/elektrisonad.tsv")
+```
+
+Asendasin ka w v-ga, et kirjakuju muutumine ei segaks loendamist. Kuvan iga sõna asukoha punktina lisades väikse ennustamatuse geom_jitter() funktsiooniga.
+
+```{r}
+
+graafik<- elekt_sonad %>% 
+  filter(str_detect(word,"elek")) %>% 
+  mutate(word=str_replace(word,"w","v")) %>%
+  mutate(type=str_extract(word,"elektritramm|hüdroelekt|elektrivalgus|elektrivabrik|elektrivool|elektrijaam|elektrimootor|elektrotehnika|elektrijõu|elektriväe|elektrifitseer|elektritriikrau|elektrikell|elektriplii")) %>% 
+  filter(!is.na(type)) %>% 
+  ggplot(aes(x=year, y=type))+
+  geom_jitter(alpha=0.6)
+
+graafik
+
+ggsave("plots/elektrigraafik1.png",graafik)
+
+```
+
+## Leitu
+
+Graafikul on näha uudised mõnedest elektri kasutusaladest Postimehes 1886-1940 vahemikus. On näha, et elektrijaamadest ja elektrivalgusest hakati oluliselt tihedamini kui varem rääkima 1911 kanti, elektrivalgusest ja elektriväest räägiti juba 1880ndatel veidi. Elektrijõu võeti kasutusele uue sõnana elektriväe asemel. 1920ndatel hakati rääkima elektrifitseerimisest ja elektritrammidest, peagi ka elektripliidist ja elektritriikrauast. Samuti sai hüdroelekter teemaks. Mõnest elektripõhisest tootest hakati rääkima juba varem - elektrikellasid sai mainitud juba 1890ndatel.
