@@ -103,7 +103,7 @@ Veel kasutasime eelmine kord käsku mutate() uute tulpade tegemiseks, ja row_num
 
 ```{r}
 
-asukohad <- tokens %>% 
+asukohad <- raamat1_sonad %>% 
   mutate(nr=row_number(), n=n()) %>% 
   mutate(asukoht=nr/(n+1)) %>% 
   ungroup()
