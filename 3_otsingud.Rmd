@@ -391,6 +391,9 @@ Samamoodi kui me vaatame eri peatükke teose sees võime vaadata ka eri teoseid.
 Seekord loeme andmetena sisse rohkem kui ühe tekstifaili. Tekstid pärinevad ikka siit: https://datadoi.ee/handle/33/76. map_df() käsu pärast ei pea praegu muretsema. Käsk otsib üles failid kataloogist soned, seob nad omavahel ja siis teeb uue tulba filename.
 
 ```{r}
+# Mõnes R-i installi puhul tuleb suurendada lubatud mälu suurust siin. Seda üldiselt ei pea tegema, aga ajutiselt võimalus igaks juhuks siin.
+# Sys.setenv(VROOM_CONNECTION_SIZE = "500000")
+
 filelist <- list.files("data/uiboaed_ilukirjandus/soned",full.names=T)
 texts <- map_df(filelist, ~ tibble(txt = read_lines(.x)) %>%
                   mutate(filename = .x)) %>%
